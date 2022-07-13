@@ -1,0 +1,12 @@
+{
+  "HttpAddress": "<address>",
+  "HttpPort": "<port",
+  "SQL_USER": "<username of the db>",
+  "SQL_PASS": "<password of the db>",
+  "SQL_HOST": "<host of the db>",
+  "SQL_DATABASE": "<database the server should ocupy>",
+  "SQL_TABLE": "<the table that the server should utilise>",
+  "SQL_AUTH_TABLE" : "<sql table souly for authentication (WORK IN PROGRESS)>",
+  "AUTH_HASH": "<hash for sessions and passwords (it uses the same, so better think of a good hash =) >"
+}
+

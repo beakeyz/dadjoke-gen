@@ -1,0 +1,12 @@
+{
+ "LastRunDate": "01-27-2022",
+ "CurrentActiveUrl": "https://google.com",
+ "PreviousJokeIndex": -1,
+ "Token": {
+  "TokenValue": -1,
+  "TokenEmail": "null",
+  "TokenUsername": "null"
+ },
+ "HasToken": false,
+ "HasCache": true
+}
