@@ -25,6 +25,11 @@ type Session struct {
   ExperationDate string
   SessionId uuid.UUID
   FileName os.File
+  IsNull bool
+}
+
+func EmptySession () *Session {
+  return &Session{IsNull: true}
 }
 
 func createSession(user *User) *Session {

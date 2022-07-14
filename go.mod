@@ -11,10 +11,12 @@ require (
 )
 
 require golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-require golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
+
+require golang.org/x/sys v0.0.0-20211205182925-97ca703d548d
 
 require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 )

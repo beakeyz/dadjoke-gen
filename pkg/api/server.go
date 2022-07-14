@@ -15,10 +15,10 @@ import (
 
 	"github.com/beakeyz/dadjoke-gen/pkg/api/routing"
 	"github.com/beakeyz/dadjoke-gen/pkg/database"
+	"github.com/beakeyz/dadjoke-gen/pkg/middleware"
 	"github.com/beakeyz/dadjoke-gen/pkg/setting"
 	"github.com/beakeyz/dadjoke-gen/pkg/structures"
 	"github.com/beakeyz/dadjoke-gen/pkg/web"
-	"github.com/google/uuid"
 )
 
 type HttpServer struct{
@@ -140,6 +140,7 @@ func (self *HttpServer)BootstrapRoutes()  {
 
   // self.mux.Use(middleware.TestMiddleware())
   self.mux.Use(self.ContextHandler.Middleware)
+  self.mux.Use(middleware.AuthEntry())
 
   for _, mw := range self.Middlewares {
     self.mux.Use(mw)
@@ -150,20 +151,23 @@ func (self *HttpServer)BootstrapRoutes()  {
 
 }
 
-func (self *HttpServer) Index (w http.ResponseWriter, rq *http.Request) {
+func (self *HttpServer) Index (ctx *web.ReqContext) {
   fmt.Println("Index")
-  fmt.Println(w.Header().Get("fuck"))
 
-  self.SessionManager.AddSession(&structures.User{
-    Username: "Anonymous",
-    Token: uuid.New(),
-    IsAnonymous: true,
-  })
+  //self.SessionManager.AddSession(&structures.User{
+  //  Username: "Anonymous",
+  //  Token: uuid.New(),
+  //  IsAnonymous: true,
+  //})
   
-  w.Header().Add("token", self.SessionManager.Sessions[0].SessionId.String())
-  fmt.Println(len(self.SessionManager.Sessions))
+  //w.Header().Add("token", self.SessionManager.Sessions[0].SessionId.String())
+  //fmt.Println(len(self.SessionManager.Sessions))
 
-  w.Write([]byte("whatsup"))
+  if ctx.UserSession.IsNull {
+    ctx.Resp.Write([]byte("no Session"))
+  } else {
+    ctx.Resp.Write([]byte(ctx.UserSession.LinkedUser.Username))
+  }
 }
 
 func (self *HttpServer) GetJokes(w http.ResponseWriter, rq *http.Request) {
