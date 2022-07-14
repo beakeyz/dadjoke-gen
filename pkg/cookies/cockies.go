@@ -10,6 +10,7 @@ import (
 
 func TouchCookie (cookieName string, value string, writer http.ResponseWriter, maxLifetime int, path string, secure bool) {
 
+  // TODO: fuck wit these settings for a bit =)
   cookie := http.Cookie {
     Name: cookieName,
     Value: value,
@@ -17,7 +18,7 @@ func TouchCookie (cookieName string, value string, writer http.ResponseWriter, m
     Path: path,
     Secure: secure,
     HttpOnly: true,
-    SameSite: http.SameSiteDefaultMode,
+    SameSite: http.SameSiteLaxMode,
   }
   http.SetCookie(writer, &cookie)
 }

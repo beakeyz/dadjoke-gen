@@ -11,6 +11,8 @@ type User struct{
 	Token uuid.UUID 
   // bananas =D
   IsAnonymous bool
+  // where they go?
+  IsNull bool
 }
 
 func CreateUser (name string, token uuid.UUID) *User {
@@ -18,8 +20,13 @@ func CreateUser (name string, token uuid.UUID) *User {
     Username: name,
     Token: token,
     IsAnonymous: false,
+    IsNull: false,
   }
 }
 
 func (self *User) AuthenticateUser () {
+}
+
+func CreateEmptyUser () *User {
+  return &User{IsNull: true}
 }

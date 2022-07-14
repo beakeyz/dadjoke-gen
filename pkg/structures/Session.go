@@ -80,8 +80,15 @@ func CreateSassManager() (*SessionManager, error) {
     SessionPath: sessionPath,
   }
 
-  fmt.Println("SessionManager")
+  if refreshErr := RefreshSessions(manager); refreshErr != nil {
+    fmt.Println(refreshErr.Error())
+    return &SessionManager{}, refreshErr
+  }
 
+  return manager, nil
+}
+
+func RefreshSessions (mngr *SessionManager) error {
   var items, _ = ioutil.ReadDir(sessionPath) 
   for _, item := range items {
     fmt.Println("Hi: " + item.Name())
@@ -89,19 +96,23 @@ func CreateSassManager() (*SessionManager, error) {
       var raw, _ = os.Open(strings.Join([]string{sessionPath, item.Name()}, ""))
       var fileBytes, readErr = ioutil.ReadAll(raw)
       if readErr != nil {
-        return &SessionManager{}, readErr
+        return readErr
       }
       var dummySession Session = Session{}
       json.Unmarshal(fileBytes, &dummySession)
-      manager.Sessions = append(manager.Sessions, dummySession)
+      mngr.Sessions = append(mngr.Sessions, dummySession)
     }
   } 
-  return manager, nil
+  return nil
 }
 
 // TODO perhaps have an RefreshSessions function that syncs the local sessions in memory with the sessions on disk?
 func (self *SessionManager) AddSession(user *User) error {
-  fmt.Println("fuck")
+  if refreshErr := RefreshSessions(self); refreshErr != nil {
+    fmt.Println(refreshErr.Error())
+    return refreshErr
+  }
+
   if user.IsAnonymous {
     sass, sassErr := createAnonymousSession(user)
     if sassErr != nil {
@@ -119,6 +130,16 @@ func (self *SessionManager) ClearSessions() {
 
 }
 
-func (self *SessionManager) GetSession(use *User) {
+func (self *SessionManager) GetSession(user *User) (*Session, error) {
+  if refreshErr := RefreshSessions(self); refreshErr != nil {
+    fmt.Println(refreshErr.Error())
+    return EmptySession(), refreshErr
+  }
 
+  for _, sass := range self.Sessions {
+    if sass.LinkedUser.Token == user.Token {
+      return &sass, nil
+    } 
+  }
+  return EmptySession(), nil
 }
