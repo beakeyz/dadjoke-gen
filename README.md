@@ -13,15 +13,19 @@ also, because I hate Tensorflow, I am going to TRY to write something along the 
 
 ## Well thats cool, but how do I use it?
 
-just clone the bitch and cd into the directory of the thing u want to run. then, use the command:
+Clone the mf and you are basicaly done. There is a makefile to make running and building easier.
+The makefile is simple as hell and prob redundant but who really cares right?
 
+To build:
 ```bash
-go run .
+make build-server
 ```
-
-to run the client, use the same command, but it will give a help-log, so you know exactly how to use it
-Honnestly, I don't think you should run it at all, just look at the code and get seizures from the way I over-engineer my solutions lmao
-
+To run:
+```bash
+make run-server
+```
+to run the client, use the same thing but with the 'client' suffix instead of 'server'
+Since the client was built on an older version of the server, its broken at this time. I will either remove it (and continue with the flutter client) or revive it and make it cool 😎
 ## Some side-notes (just cuz)
 
 I know the format of this project does not cohere to the standard golang specifications, buuuut idrgaf. I will probably fix it sometime later, but for now you are going to have to deal with my way of structure
