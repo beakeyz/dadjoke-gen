@@ -31,11 +31,9 @@ func AuthEntry () web.Handler {
 
       sessionId := ctx.UserSession.SessionId
 
-      session, scanErr := mngr.GetSession(&structures.User{
-        Username: "Undetermined",
-        Token: sessionId,
-        IsAnonymous: true,
-      })
+      // Check for the sessionId
+      session, scanErr := mngr.GetSession(sessionId)
+
       if scanErr != nil || session.IsNull == true {
         // cry, we got an invalid sessionId ;-;
         ctx.UserSession = structures.EmptySession()
@@ -43,30 +41,37 @@ func AuthEntry () web.Handler {
         return
       }
 
+      // TODO : check if the dehashing of the sent ID ties together to hashing an upwrd and a sessionId
+      // How? : to have this work we have to store the sessionId that was used to create a specific user
+      //        together with its hashed pswrd and other ud, inside a db. When this user is logging in, 
+      //        we assume that the SessionId connected to its Anonymous user is different from the one 
+      //        that corresponds to the user that is being logged into. When the login is successfull 
+      //        (Meaning that the given username/email and password match set hashes in the database), 
+      //        we should assign the Correct SessionId to the client, namely the hash between the password 
+      //        and the original SessionId used to create the user. THIS is what we would then match against.
+      // idk if that makes sense but, message to future me, go fucking make sense out of it, because you have no choice biatch
+
       // Set the right session in the context
       ctx.UserSession = session 
 
     } else {
       
+      // first request that a client does ALWAYS creates an Anonymous user. These kinds of users have the IsNull flag, cuz they should not be able to access user-only functions.
       usr := &structures.User{
         Username: "Anonymous",
         Token: uuid.New(),
         IsAnonymous: true,
+        IsNull: true,
       }
 
-      // cry bc error ='[
+      // cry bc potential error ='[
       mngr.AddSession(usr)
 
-      cookies.SessionCookie(usr.Token.String(), ctx.Context, time.Hour)
+      cookies.SessionCookie(usr.Token.String(), ctx.Context, time.Hour * time.Duration(24))
       fmt.Println("Finished assigning a new Session")
       // TODO: check if ctx.Redirect actually works =D
       // ctx.Redirect("/")
     }
-
-    // assign a new session if it didn't already exist
-
-    // make sure the client saves a hash of the sessionId client-side
-
   }
 }
 

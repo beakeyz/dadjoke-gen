@@ -22,7 +22,8 @@ type SessionManager struct {
 
 type Session struct {
   LinkedUser User
-  ExperationDate string
+  CreationDate string
+  MaxAge int
   SessionId uuid.UUID
   FileName os.File
   IsNull bool
@@ -38,11 +39,16 @@ func createSession(user *User) *Session {
   }
 }
 
+func (self *Session) SetSession (newSass *Session) {
+  self = newSass
+}
+
 func createAnonymousSession(anonUser *User) (*Session, error) {
 
   var sass *Session = &Session {
     LinkedUser: *anonUser,
-    ExperationDate: time.Now().Add(time.Hour * 24).Format("2022-07-12"),
+    CreationDate: time.Now().Format(time.RFC3339),
+    MaxAge: int(time.Hour * time.Duration(24)),
     SessionId: anonUser.Token,
     FileName: os.File{},
   }
@@ -91,7 +97,7 @@ func CreateSassManager() (*SessionManager, error) {
 func RefreshSessions (mngr *SessionManager) error {
   var items, _ = ioutil.ReadDir(sessionPath) 
   for _, item := range items {
-    fmt.Println("Hi: " + item.Name())
+    fmt.Println("Session: " + item.Name())
     if !item.IsDir() && strings.Contains(item.Name(), ".json") {
       var raw, _ = os.Open(strings.Join([]string{sessionPath, item.Name()}, ""))
       var fileBytes, readErr = ioutil.ReadAll(raw)
@@ -100,7 +106,24 @@ func RefreshSessions (mngr *SessionManager) error {
       }
       var dummySession Session = Session{}
       json.Unmarshal(fileBytes, &dummySession)
-      mngr.Sessions = append(mngr.Sessions, dummySession)
+
+      // now we can perform checks on the session
+
+      sessTime, parseErr := time.Parse(time.RFC3339, dummySession.CreationDate)
+      if parseErr != nil {
+        // cry once again
+        fmt.Println(parseErr.Error())
+      }
+
+      if time.Since(sessTime) > time.Duration(dummySession.MaxAge) {
+        fmt.Println("Session expired!")
+        // remove session
+        if removeErr := mngr.RemoveSession(&dummySession); removeErr != nil {
+          return removeErr
+        }
+      } else {
+        mngr.Sessions = append(mngr.Sessions, dummySession)
+      }
     }
   } 
   return nil
@@ -130,16 +153,57 @@ func (self *SessionManager) ClearSessions() {
 
 }
 
-func (self *SessionManager) GetSession(user *User) (*Session, error) {
+func (self *SessionManager) GetSessionFromUser (user *User) (*Session, error) {
   if refreshErr := RefreshSessions(self); refreshErr != nil {
     fmt.Println(refreshErr.Error())
     return EmptySession(), refreshErr
   }
 
   for _, sass := range self.Sessions {
-    if sass.LinkedUser.Token == user.Token {
+    // NOTE: dereference the user param, bcuz we need to check if the objects are the same, not if their addresses match =D
+    if sass.LinkedUser == *user {
       return &sass, nil
     } 
   }
   return EmptySession(), nil
+}
+
+func (self *SessionManager) GetSession (Uuid uuid.UUID) (*Session, error) {
+
+  if refreshErr := RefreshSessions(self); refreshErr != nil {
+    fmt.Println(refreshErr.Error())
+    return EmptySession(), refreshErr
+  }
+
+  for _, sass := range self.Sessions {
+    if sass.SessionId == Uuid {
+      return &sass, nil
+    } 
+  }
+  return EmptySession(), nil
+}
+
+func (self *SessionManager) RemoveSession (sass *Session) error {
+  
+  if self.ContainsSession(sass) {
+    // do funnie
+  }
+
+  removeErr := os.Remove(sessionPath + sass.SessionId.String() + ".json")
+  if removeErr != nil {
+    fmt.Println("fucked up while removing a session.json")
+    fmt.Println(removeErr.Error())
+    return removeErr
+  }
+
+  return nil
+}
+
+func (self *SessionManager) ContainsSession (sess *Session) bool {
+  for _, b := range self.Sessions {
+        if b == *sess {
+            return true
+        }
+    }
+    return false
 }
