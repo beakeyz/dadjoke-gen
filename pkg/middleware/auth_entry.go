@@ -37,6 +37,7 @@ func AuthEntry () web.Handler {
       if scanErr != nil || session.IsNull == true {
         // cry, we got an invalid sessionId ;-;
         ctx.UserSession = structures.EmptySession()
+        cookies.SessionCookie("", ctx.Context, -1)
         fmt.Println("we have recieved an invalid SessionId")
         return
       }
@@ -50,6 +51,8 @@ func AuthEntry () web.Handler {
       //        we should assign the Correct SessionId to the client, namely the hash between the password 
       //        and the original SessionId used to create the user. THIS is what we would then match against.
       // idk if that makes sense but, message to future me, go fucking make sense out of it, because you have no choice biatch
+
+      
 
       // Set the right session in the context
       ctx.UserSession = session 

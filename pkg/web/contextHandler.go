@@ -9,8 +9,7 @@ import (
 )
 
 // NOTE: shit specific to the contextHandler like different types of handling for different auth methods and requests goes in here
-type ContextHandler struct {
-}
+type ContextHandler struct {}
 
 func MakeContextHandler () *ContextHandler {
   return &ContextHandler{}

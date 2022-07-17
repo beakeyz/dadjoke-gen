@@ -19,8 +19,6 @@ github.com/spf13/cobra
 github.com/spf13/pflag
 # golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 ## explicit; go 1.17
-golang.org/x/crypto/bcrypt
-golang.org/x/crypto/blowfish
 # golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 ## explicit
 golang.org/x/sync/errgroup
