@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/beakeyz/dadjoke-gen/pkg/api/auth"
 	"github.com/beakeyz/dadjoke-gen/pkg/api/routing"
 	"github.com/beakeyz/dadjoke-gen/pkg/middleware"
 )
@@ -24,6 +25,8 @@ func (httpServ *HttpServer)RegisterApiEndpoints(){
 
   // all the routes get added to the routehandler here
   rh.RegisterGet("/", test, httpServ.Index) 
+  rh.RegisterGet("/reg", auth.Register)
+  rh.RegisterPost("/login", auth.Login)
   rh.RegisterGet("/api/v1/get_jokes", httpServ.GetJokes)
   rh.RegisterPost("/api/v1/post_jokes", httpServ.Post_Jokes)
 

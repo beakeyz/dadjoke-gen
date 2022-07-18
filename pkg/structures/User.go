@@ -1,6 +1,9 @@
 package structures
 
 import (
+	"fmt"
+
+	"github.com/beakeyz/dadjoke-gen/pkg/database"
 	"github.com/google/uuid"
 )
 
@@ -29,4 +32,22 @@ func (self *User) AuthenticateUser () {
 
 func CreateEmptyUser () *User {
   return &User{IsNull: true}
+}
+
+func GetFromDb (username string) *User {
+  
+  thing := database.Connection.QueryRow("SELECT * FROM users WHERE Username = ?", username)
+  if thing.Err() != nil {
+    return CreateEmptyUser()
+  }
+
+  // TODO: fix database entries + thing.Scan fixen
+  var dummyUser User = *CreateEmptyUser()
+  if scanErr := thing.Scan(&dummyUser); scanErr != nil {
+    fmt.Println(scanErr.Error())
+    return CreateEmptyUser()
+  }
+  dummyUser.IsNull = false
+
+  return &dummyUser
 }

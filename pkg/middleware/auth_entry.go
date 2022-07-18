@@ -32,6 +32,8 @@ func AuthEntry () web.Handler {
       sessionId := ctx.UserSession.SessionId
 
       // Check for the sessionId
+      // TODO: if the user is Anonymous, check the default sessionId
+      //       otherwise use the Token from the user
       session, scanErr := mngr.GetSession(sessionId)
 
       if scanErr != nil || session.IsNull == true {
@@ -52,10 +54,10 @@ func AuthEntry () web.Handler {
       //        and the original SessionId used to create the user. THIS is what we would then match against.
       // idk if that makes sense but, message to future me, go fucking make sense out of it, because you have no choice biatch
 
-      
-
       // Set the right session in the context
       ctx.UserSession = session 
+      // update usersession
+      cookies.SessionCookie(ctx.UserSession.SessionId.String(), ctx.Context, time.Hour * time.Duration(24))
 
     } else {
       

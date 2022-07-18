@@ -186,13 +186,12 @@ func (self *SessionManager) GetSession (Uuid uuid.UUID) (*Session, error) {
 func (self *SessionManager) RemoveSession (sass *Session) error {
   
   if self.ContainsSession(sass) {
-    // do funnie
+    // TODO: do funnie, remove from local object
   }
 
   removeErr := os.Remove(sessionPath + sass.SessionId.String() + ".json")
   if removeErr != nil {
     fmt.Println("fucked up while removing a session.json")
-    fmt.Println(removeErr.Error())
     return removeErr
   }
 

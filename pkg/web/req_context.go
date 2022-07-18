@@ -1,6 +1,7 @@
 package web
 
 import (
+	"database/sql"
 	"strings"
 
 	"github.com/beakeyz/dadjoke-gen/pkg/structures"
@@ -11,9 +12,9 @@ import (
 type ReqContext struct {
   *Context
   UserSession *structures.Session
+  Connection *sql.DB
 }
 
 func (self *ReqContext) IsApi () bool {
   return strings.HasPrefix(self.Req.URL.Path, "/api")
 }
-
