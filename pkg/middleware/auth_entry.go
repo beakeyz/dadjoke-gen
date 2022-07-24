@@ -77,7 +77,10 @@ func AuthEntry () web.Handler {
       mngr.AddSession(sess)
 
       cookies.SessionCookie(usr.Token, ctx.Context, time.Hour * time.Duration(24))
+      ctx.UserSession = sess
       fmt.Println("Finished assigning a new Session")
+
+
       // TODO: check if ctx.Redirect actually works =D
       // ctx.Redirect("/")
     }
