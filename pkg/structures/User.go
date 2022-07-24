@@ -11,14 +11,14 @@ type User struct{
   // username so we can easily reference a user
 	Username string
   // token that is a combination of their password + their SessionId that was used to create the password
-	Token uuid.UUID 
+	Token string 
   // bananas =D
   IsAnonymous bool
   // where they go?
   IsNull bool
 }
 
-func CreateUser (name string, token uuid.UUID) *User {
+func CreateUser (name string, token string) *User {
   return &User{
     Username: name,
     Token: token,
@@ -34,20 +34,35 @@ func CreateEmptyUser () *User {
   return &User{IsNull: true}
 }
 
-func GetFromDb (username string) *User {
+func GetFromDb (username string) (*User, uuid.UUID) {
   
   thing := database.Connection.QueryRow("SELECT * FROM users WHERE Username = ?", username)
   if thing.Err() != nil {
-    return CreateEmptyUser()
+    return CreateEmptyUser(), uuid.UUID{}
   }
 
   // TODO: fix database entries + thing.Scan fixen
-  var dummyUser User = *CreateEmptyUser()
-  if scanErr := thing.Scan(&dummyUser); scanErr != nil {
-    fmt.Println(scanErr.Error())
-    return CreateEmptyUser()
-  }
-  dummyUser.IsNull = false
+  var uname string
+  var token string
+  var _origSessId string
 
-  return &dummyUser
+  if scanErr := thing.Scan(&uname, &_origSessId, &token); scanErr != nil {
+    fmt.Println(scanErr.Error())
+    return CreateEmptyUser(), uuid.UUID{}
+  }
+  
+  origSessId, parseErr2 := uuid.Parse(_origSessId)
+  if parseErr2 != nil {
+    fmt.Println(parseErr2.Error())
+    return CreateEmptyUser(), uuid.UUID{}
+  }
+
+  var dummyUser User = User{
+    Username: uname,
+    Token: token,
+    IsAnonymous: false,
+    IsNull: false,
+  }
+
+  return &dummyUser, origSessId
 }

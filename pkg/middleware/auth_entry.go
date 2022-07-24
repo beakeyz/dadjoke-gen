@@ -62,17 +62,21 @@ func AuthEntry () web.Handler {
     } else {
       
       // first request that a client does ALWAYS creates an Anonymous user. These kinds of users have the IsNull flag, cuz they should not be able to access user-only functions.
+      var sessionId uuid.UUID = uuid.New()
+
       usr := &structures.User{
         Username: "Anonymous",
-        Token: uuid.New(),
+        Token: sessionId.String(),
         IsAnonymous: true,
         IsNull: true,
       }
 
-      // cry bc potential error ='[
-      mngr.AddSession(usr)
+      var sess *structures.Session = structures.CreateSessionTemplate(usr, sessionId)
 
-      cookies.SessionCookie(usr.Token.String(), ctx.Context, time.Hour * time.Duration(24))
+      // cry bc potential error ='[
+      mngr.AddSession(sess)
+
+      cookies.SessionCookie(usr.Token, ctx.Context, time.Hour * time.Duration(24))
       fmt.Println("Finished assigning a new Session")
       // TODO: check if ctx.Redirect actually works =D
       // ctx.Redirect("/")

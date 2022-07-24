@@ -33,26 +33,22 @@ func EmptySession () *Session {
   return &Session{IsNull: true}
 }
 
-func createSession(user *User) *Session {
-  return &Session{
-
-  }
-}
-
 func (self *Session) SetSession (newSass *Session) {
   self = newSass
 }
 
-func createAnonymousSession(anonUser *User) (*Session, error) {
+func CreateSessionTemplate (user* User, sassId uuid.UUID) *Session {
 
-  var sass *Session = &Session {
-    LinkedUser: *anonUser,
+  return &Session {
+    LinkedUser: *user,
     CreationDate: time.Now().Format(time.RFC3339),
     MaxAge: int(time.Hour * time.Duration(24)),
-    SessionId: anonUser.Token,
+    SessionId: sassId,
     FileName: os.File{},
   }
+}
 
+func createSession(sass *Session) (*Session, error) {
   bytes, err := json.Marshal(sass)
   if err != nil {
     return &Session{}, err
@@ -130,21 +126,19 @@ func RefreshSessions (mngr *SessionManager) error {
 }
 
 // TODO perhaps have an RefreshSessions function that syncs the local sessions in memory with the sessions on disk?
-func (self *SessionManager) AddSession(user *User) error {
+func (self *SessionManager) AddSession(session *Session) error {
   if refreshErr := RefreshSessions(self); refreshErr != nil {
     fmt.Println(refreshErr.Error())
     return refreshErr
   }
 
-  if user.IsAnonymous {
-    sass, sassErr := createAnonymousSession(user)
-    if sassErr != nil {
-      fmt.Println(sassErr.Error())
-      return sassErr 
-    } 
-    self.Sessions = append(self.Sessions, *sass)
-    return nil
+
+  sass, sassErr := createSession(session)
+  if (sassErr != nil) {
+    fmt.Println(sassErr.Error())
+    return sassErr
   }
+  self.Sessions = append(self.Sessions, *sass)
   return nil
 }
 
@@ -186,7 +180,7 @@ func (self *SessionManager) GetSession (Uuid uuid.UUID) (*Session, error) {
 func (self *SessionManager) RemoveSession (sass *Session) error {
   
   if self.ContainsSession(sass) {
-    // TODO: do funnie, remove from local object
+    // TODO: do funnie
   }
 
   removeErr := os.Remove(sessionPath + sass.SessionId.String() + ".json")
