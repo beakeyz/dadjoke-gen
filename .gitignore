@@ -1,2 +1,2 @@
-bin/
-bin/linux-amd64/settings.json
+/bin
+/bin/linux-amd64/settings.json

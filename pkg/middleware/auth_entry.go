@@ -10,80 +10,73 @@ import (
 	"github.com/google/uuid"
 )
 
-func AuthEntry () web.Handler {
-  return func (ctx *web.ReqContext) {
+func AuthEntry() web.Handler {
+	return func(ctx *web.ReqContext) {
 
-    // TODO
+		// TODO
 
-    // check if there already is a session
-    // by dehashing the hash that the client sent us
-    // and matching it against our local sessionstore
+		// check if there already is a session
+		// by dehashing the hash that the client sent us
+		// and matching it against our local sessionstore
 
-    mngr, createErr := structures.CreateSassManager() 
-    if createErr != nil {
-      // cry
-      fmt.Println("failed to create a new SessionManager!")
-      fmt.Println(createErr.Error())
-    }
+		mngr, createErr := structures.CreateSassManager()
+		if createErr != nil {
+			// cry
+			fmt.Println("failed to create a new SessionManager!")
+			fmt.Println(createErr.Error())
+		}
 
-    if !ctx.UserSession.IsNull {
-      fmt.Println("Session in the header isn't null")
+		if !ctx.UserSession.IsNull {
+			fmt.Println("Session in the header isn't null")
 
-      sessionId := ctx.UserSession.SessionId
+			sessionId := ctx.UserSession.SessionId
 
-      // Check for the sessionId
-      // TODO: if the user is Anonymous, check the default sessionId
-      //       otherwise use the Token from the user
-      session, scanErr := mngr.GetSession(sessionId)
+			// Check for the sessionId
+			// TODO: if the user is Anonymous, check the default sessionId
+			//       otherwise use the Token from the user
+			session, scanErr := mngr.GetSession(sessionId)
+			if scanErr != nil {
+				// cry, we got an invalid sessionId ;-;
+				ctx.UserSession = structures.EmptySession()
+        fmt.Println("Something went wrong while refreshing sessionStore: " + scanErr.Error())
+				return
+			}
 
-      if scanErr != nil || session.IsNull == true {
-        // cry, we got an invalid sessionId ;-;
-        ctx.UserSession = structures.EmptySession()
-        cookies.SessionCookie("", ctx.Context, -1)
-        fmt.Println("we have recieved an invalid SessionId")
+			if session.IsNull {
+				ctx.UserSession = structures.EmptySession()
+				cookies.SessionCookie("", ctx.Context, -1)
+				fmt.Println("Invalid session")
         return
-      }
+			}
 
-      // TODO : check if the dehashing of the sent ID ties together to hashing an upwrd and a sessionId
-      // How? : to have this work we have to store the sessionId that was used to create a specific user
-      //        together with its hashed pswrd and other ud, inside a db. When this user is logging in, 
-      //        we assume that the SessionId connected to its Anonymous user is different from the one 
-      //        that corresponds to the user that is being logged into. When the login is successfull 
-      //        (Meaning that the given username/email and password match set hashes in the database), 
-      //        we should assign the Correct SessionId to the client, namely the hash between the password 
-      //        and the original SessionId used to create the user. THIS is what we would then match against.
-      // idk if that makes sense but, message to future me, go fucking make sense out of it, because you have no choice biatch
+			// Set the right session in the context
+			ctx.UserSession = session
+			// update usersession
+			cookies.SessionCookie(ctx.UserSession.SessionId.String(), ctx.Context, time.Hour*time.Duration(24))
 
-      // Set the right session in the context
-      ctx.UserSession = session 
-      // update usersession
-      cookies.SessionCookie(ctx.UserSession.SessionId.String(), ctx.Context, time.Hour * time.Duration(24))
+		} else {
 
-    } else {
-      
-      // first request that a client does ALWAYS creates an Anonymous user. These kinds of users have the IsNull flag, cuz they should not be able to access user-only functions.
-      var sessionId uuid.UUID = uuid.New()
+			// first request that a client does ALWAYS creates an Anonymous user. These kinds of users have the IsNull flag, cuz they should not be able to access user-only functions.
+			var sessionId uuid.UUID = uuid.New()
 
-      usr := &structures.User{
-        Username: "Anonymous",
-        Token: sessionId.String(),
-        IsAnonymous: true,
-        IsNull: true,
-      }
+			usr := &structures.User{
+				Username:    "Anonymous",
+				Token:       sessionId.String(),
+				IsAnonymous: true,
+				IsNull:      true,
+			}
 
-      var sess *structures.Session = structures.CreateSessionTemplate(usr, sessionId)
+			var sess *structures.Session = structures.CreateSessionTemplate(usr, sessionId)
 
-      // cry bc potential error ='[
-      mngr.AddSession(sess)
+			// cry bc potential error ='[
+			mngr.AddSession(sess)
 
-      cookies.SessionCookie(usr.Token, ctx.Context, time.Hour * time.Duration(24))
-      ctx.UserSession = sess
-      fmt.Println("Finished assigning a new Session")
+			cookies.SessionCookie(usr.Token, ctx.Context, time.Hour*time.Duration(24))
+			ctx.UserSession = sess
+			fmt.Println("Finished assigning a new Session")
 
-
-      // TODO: check if ctx.Redirect actually works =D
-      // ctx.Redirect("/")
-    }
-  }
+			// TODO: check if ctx.Redirect actually works =D
+			// ctx.Redirect("/")
+		}
+	}
 }
-

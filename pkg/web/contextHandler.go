@@ -51,6 +51,7 @@ func (self *ContextHandler) Middleware (ctx *Context) {
       IsNull: false,
       LinkedUser: *structures.CreateEmptyUser(),
     }
+    fmt.Println("Assigned the sesson id")
   } else {
     fmt.Println("No session in the request!")
   }
