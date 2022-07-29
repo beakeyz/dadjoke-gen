@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/beakeyz/dadjoke-gen/pkg/setting"
-	_ "github.com/go-sql-driver/mysql"
+  _ "github.com/go-sql-driver/mysql"
 )
 
 var(
