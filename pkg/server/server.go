@@ -24,7 +24,7 @@ type Server struct {
 	shutdownFn    context.CancelFunc
 
 	mtx     sync.Mutex
-	rootLog logger.LogCaller
+	log logger.LogCaller
 	errLog  logger.LogCaller
 }
 
@@ -34,7 +34,7 @@ func (srv *Server) Run() exitCode {
 
 	defer srv.shutdown()
 
-	srv.rootLog.Out("Initializing...")
+	srv.log.Out("Initializing server")
 
 	//setup httpserver
 	//   - setup routes
@@ -52,83 +52,101 @@ func (srv *Server) Run() exitCode {
 
 			select {
 			case <-srv.ctx.Done():
-				srv.rootLog.Out("Im out lmao")
 				return srv.ctx.Err()
 			default:
 			}
 
 			//srv.rootLog.Out("Running http server on \033[1m" + srv.httpServer.ServerConfig.HttpAddress + ":" + srv.httpServer.ServerConfig.HttpPort + "\033[0m")
 			// srv.httpServer.Run(srv.ctx)
-			srv.rootLog.Out("Running routine")
+			srv.log.Out("Running routine")
 			_subapp.Run(srv.ctx)
 
-			srv.rootLog.Out("Stopped the http server")
+			srv.log.Out("Stopped the http server")
 			return nil
 		})
 	}
 
-	srv.rootLog.Out("Waiting for the server...")
+	srv.log.Out("Waiting for the server...")
 	if srv.childRoutines.Wait() != nil {
 		return -1
 	}
 	return 1
 }
 
-func CreateServer() *Server {
+func CreateServer() (error, *Server) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
+
+	var s *Server = &Server{
+		httpServer:     nil,
+		sessionManager: nil,
+		sub_services:   nil,
+		ctx:            childCtx,
+		childRoutines:  childRoutines,
+		shutdownFn:     shutdownFn,
+		log:        *logger.New("server", 96, false),
+		errLog:         *logger.New("server", 96, true),
+	}
 
 	// Load settings
 	var servConf *settings.ServerConfig = &settings.ServerConfig{}
 	err := servConf.LoadFromJson(settings.SETTINGS)
 	if err != nil {
 		initErrLog.Out(err.Error())
-		// yield
-		shutdownFn()
-		return &Server{}
+		return err, s
 	}
 
 	// init http server
 	HttpServer, httpErr := api.HttpBootstrap(servConf)
 	if httpErr != nil {
 		initErrLog.Out("Error while Bootstrapping the HttpServer: " + httpErr.Error())
-		// yield
-		shutdownFn()
-		return &Server{}
+		return err, s
 	}
 
+    s.httpServer = HttpServer
+
 	// Setup SessionManager
+    // FIXME: having an async session manager is mega dogshit (I think, we could probably have a good impl, but ye this one aint)
 	var manager, managerErr = structs.CreateSassManager()
 	if managerErr != nil {
 		initErrLog.Out(managerErr.Error())
-		shutdownFn()
-		return &Server{}
+		return err, s 
 	}
+
+    s.sessionManager = manager
 
 	subservices := []subapps.SubService{
 		HttpServer,
 		manager,
 	}
 
-	var s *Server = &Server{
-		httpServer:     HttpServer,
-		sessionManager: manager,
-		sub_services:   subservices,
-		ctx:            childCtx,
-		childRoutines:  childRoutines,
-		shutdownFn:     shutdownFn,
-		rootLog:        *logger.New("server", 96, false),
-		errLog:         *logger.New("server", 96, true),
-	}
+    s.sub_services = subservices
 
-	return s
+	return nil, s
 }
 
 func RunServer() exitCode {
+    err, mainServer := CreateServer()
 
-	var mainServer *Server = CreateServer()
+    /* Make sure we close the context chanel */
+    defer mainServer.shutdownFn()
+
+    /* Failed to create the server, let's dip */
+    if (err != nil) {
+      return -1
+    }
+
+    /* Failed to create a http server, let's dip */
+    if (mainServer.httpServer == nil) {
+      return -1
+    }
+
+    /* Failed to create a session manager, let's dip =/ */
+    if (mainServer.sessionManager == nil) {
+      return -1
+    }
+
 	return mainServer.Run()
-
 }
 
 func (srv *Server) shutdown() error { //TODO: pull funny

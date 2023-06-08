@@ -1,5 +1,8 @@
 /bin
 /bin/**
 
+/sessions
+/sessions/**
+
 settings.json
 arch.txt

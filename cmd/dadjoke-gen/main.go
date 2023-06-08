@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	os.Exit(int(server.RunServer()))
+  os.Exit(int(server.RunServer()))
 }
